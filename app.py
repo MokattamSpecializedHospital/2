@@ -1,10 +1,10 @@
 import os
 import google.generativeai as genai
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import json
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__, template_folder='.')
 CORS(app)
 
 CLINICS_LIST = """
@@ -21,7 +21,9 @@ def recommend_clinic():
         if not symptoms: return jsonify({"error": "Missing symptoms"}), 400
         
         api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key: return jsonify({"error": "Server configuration error."}), 500
+        if not api_key:
+            print("CRITICAL ERROR: GEMINI_API_KEY is not set.")
+            return jsonify({"error": "Server configuration error."}), 500
 
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
@@ -43,7 +45,7 @@ def recommend_clinic():
 
 @app.route('/')
 def serve_index():
-    return send_from_directory('.', 'index.html')
+    return render_template('index.html')
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
